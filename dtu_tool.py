@@ -1,12 +1,10 @@
-import zlib
-import threading, time, wx, re
+import threading, time, wx
 import json
 import serial.tools.list_ports
 from pubsub import pub
-import os, base64
 from cloud_config import CloudConfig
 from datetime import datetime
-from location import chinese_map, english_map
+from localization import chinese_map, english_map
 
 ser = serial.Serial()  # 创建串口对象
 serPort = serial.tools.list_ports  # 串口列表
@@ -15,7 +13,7 @@ add_time = False  # 是否加时间戳
 convet_to_hex = False  # 是否转为hex
 serialList = []  # 串口列表
 label_list = []  # 云配置标签
-basic_setting_funcode = ["50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60", "61", "62", "63",] # 设置参数指令
+basic_setting_funcode = ["50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60", "61", "62", "63",]  # 设置参数指令
 serial_read_buffer = ""
 
 # 语言
@@ -220,7 +218,7 @@ class dtu_gui_frame(wx.Frame):
         self.uart_stopbits_combo_box = wx.ComboBox(self.setting_config_page, wx.ID_ANY, choices=["1", "2"], style=wx.CB_READONLY)
         self.uart_flowctl_combo_box = wx.ComboBox(self.setting_config_page, wx.ID_ANY, choices=["FC_NONE", "FC_HW"], style=wx.CB_READONLY)
         self.rs485_direction_pin_txt_ctrl = wx.TextCtrl(self.setting_config_page, wx.ID_ANY, "")
-        self.filter_txt_ctrl = wx.TextCtrl(self.setting_config_page, wx.ID_ANY, "")
+        # self.filter_txt_ctrl = wx.TextCtrl(self.setting_config_page, wx.ID_ANY, "")
         # 设置属性
         self.uart_port_num_combo_box.SetSelection(2)
         self.cloud_type_combo_box.SetMinSize((130, 30))
@@ -243,7 +241,7 @@ class dtu_gui_frame(wx.Frame):
         self.uart_flowctl_combo_box.SetMinSize((90, 30))
         self.uart_flowctl_combo_box.SetSelection(0)
         self.rs485_direction_pin_txt_ctrl.SetMinSize((90, 30))
-        self.filter_txt_ctrl.SetMinSize((90, 30))
+        # self.filter_txt_ctrl.SetMinSize((90, 30))
 
         # sizer
         setting_sizer1 = wx.BoxSizer(wx.HORIZONTAL) # 水平
@@ -274,10 +272,10 @@ class dtu_gui_frame(wx.Frame):
         setting_sizer3.Add(self.sota_combo_box, 0, 0, 0)
 
         setting_sizer4.Add((20, 0), 0, 0, 0)
-        self.filter_txt = wx.StaticText(self.setting_config_page, wx.ID_ANY, u"透传数据过滤设置")
-        setting_sizer4.Add(self.filter_txt, 0, 0, 0)
-        setting_sizer4.Add((52, 20), 0, 0, 0)
-        setting_sizer4.Add(self.filter_txt_ctrl, 0, 0, 0)
+        # self.filter_txt = wx.StaticText(self.setting_config_page, wx.ID_ANY, u"透传数据过滤设置")
+        # setting_sizer4.Add(self.filter_txt, 0, 0, 0)
+        # setting_sizer4.Add((52, 20), 0, 0, 0)
+        # setting_sizer4.Add(self.filter_txt_ctrl, 0, 0, 0)
 
         setting_sizer5.Add((20, 0), 0, 0, 0)
         self.history_txt = wx.StaticText(self.setting_config_page, wx.ID_ANY, u"历史数据存储")
@@ -627,7 +625,6 @@ class dtu_gui_frame(wx.Frame):
                     return
                 data_length = data_list[1]
                 data_values = data_list[2]
-                print(data_values)
                 try:
                     data_length_int = int(data_length)
                 except:
@@ -867,8 +864,8 @@ class dtu_gui_frame(wx.Frame):
         if self.__dtu_config["uart_config"]["rs485_direction_pin"] != "":
             self.rs485_direction_pin_txt_ctrl.write(self.__dtu_config["uart_config"]["rs485_direction_pin"])
 
-        self.filter_txt_ctrl.Clear()
-        self.filter_txt_ctrl.write(self.__dtu_config["usr_config"]["filter_mask"])
+        # self.filter_txt_ctrl.Clear()
+        # self.filter_txt_ctrl.write(self.__dtu_config["usr_config"]["filter_mask"])
 
     def __request_dtu_config(self):
         print("发送请求DTU配置参数")
@@ -1068,8 +1065,8 @@ class dtu_gui_frame(wx.Frame):
             data = {"data": {"uart_config": data}, "cmd_code": func_code}
         elif func_code == 54:
             data = {"data": {"cloud_type": data[0], "cloud_conf": data[1]}, "cmd_code": func_code}
-        elif func_code == 56:
-            data = {"data": {"filter_mask": data}, "cmd_code": func_code}
+        # elif func_code == 56:
+        #     data = {"data": {"filter_mask": data}, "cmd_code": func_code}
         elif func_code == 55 or func_code == 255:
             data = {"cmd_code": func_code, 'data': {}}
         format_datas = self.__package_data(data)
@@ -1110,8 +1107,8 @@ class dtu_gui_frame(wx.Frame):
             elif cloud_type == "mqtt_private_cloud":
                 cloud_config = self.__get_mqtt_config()
 
-            filter_mask = self.filter_txt_ctrl.GetValue(),
-            print("filter_mask:", filter_mask)
+            # filter_mask = self.filter_txt_ctrl.GetValue()
+            # print("filter_mask:", filter_mask)
             
             self.command_display.write(">>> 正在导入配置参数请勿其他操作....\n")
             try:
@@ -1125,12 +1122,13 @@ class dtu_gui_frame(wx.Frame):
                 time.sleep(0.5)
                 self.__send_config(54, (cloud_type, cloud_config))
                 time.sleep(0.5)
-                self.__send_config(56, filter_mask[0])
-                time.sleep(0.5)
+                # self.__send_config(56, filter_mask[0])
+                # time.sleep(0.5)
                 self.command_display.write(">>> 导入配置文件完成\n")
                 self.__send_config(255, 0)
                 self.command_display.write(">>> 重启DTU...\n")
             except Exception as e:
+                print(e)
                 self.command_display.write(">>> 导入文件失败\n")
         dlg.Destroy()
 
